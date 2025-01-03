@@ -32,7 +32,7 @@ The Video Titler is a tool that automatically generates concise titles for video
    cp .env.example .env
    nano .env
    ```
-   Replace `ADD-OUR-API-KEY` with your actual OpenAI API key.
+   Replace `ADD-YOUR-API-KEY` with your actual OpenAI API key.
 
 ## Usage
 Run the script with the `-d` flag followed by the directory containing your video files:
