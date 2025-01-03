@@ -61,6 +61,14 @@ def log_task(log_file, task):
     with open(log_file, "a") as file:
         file.write(task + "\n")
 
+# Function to check if a video file has been processed before
+def is_processed(log_file, video_name):
+    with open(log_file, "r") as file:
+        for line in file:
+            if video_name in line:
+                return True
+    return False
+
 # Main function to process video files in a directory
 def main():
     load_dotenv()
@@ -88,6 +96,10 @@ def main():
         video_name = os.path.splitext(os.path.basename(video_file))[0]
         print(Fore.CYAN + f"Processing video: {video_name}")
 
+        if is_processed(log_file, video_name):
+            print(Fore.YELLOW + f"Video {video_name} has already been processed.")
+            continue
+
         output_file_path = os.path.join(directory, video_name, "output_file.txt")
         if not os.path.exists(output_file_path):
             run_vhisperx(video_file)
@@ -109,4 +121,3 @@ def main():
     print(Fore.MAGENTA + "All tasks completed. Check 1video-titler.txt for the log.")
 if __name__ == "__main__":
     main()
-
