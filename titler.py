@@ -34,17 +34,26 @@ def send_to_api(text, client, model="gpt-4o-mini"):
             {"role": "system", "content": "You are a helpful assistant."},
             {"role": "user", "content": f"""Pick a concise name in english for the following transcription of a video.
             The transcription may have various typos in it and yet you are expected to pick a cocise name for the video.
-            BECAREFUL where this name is for a file name and has to be in english. DO NOT SAY BACK ANYTHING BUT THE NAME: {text}"""},
+            BECAREFUL where this name is for a file name and has to be in english. ONLY SEND the FILE NAME, WITHOUT special chars like _ or $ etc : {text}"""},
         ],
         max_tokens=50  # Adjust the max_tokens as needed
     )
     return response.choices[0].message.content.strip()
 
-# Function to rename a video file to a new name
+# Function to rename a video file and its corresponding directory to a new name
 def rename_video(video_file, new_name):
     directory = os.path.dirname(video_file)
+    video_name = os.path.splitext(os.path.basename(video_file))[0]
+    
+    # Rename the video file
     new_video_file = os.path.join(directory, new_name + ".mp4")
     os.rename(video_file, new_video_file)
+    
+    # Rename the directory containing the output_file.txt
+    old_directory = os.path.join(directory, video_name)
+    new_directory = os.path.join(directory, new_name)
+    os.rename(old_directory, new_directory)
+    
     return new_video_file
 
 # Function to log a task to a log file
@@ -59,7 +68,6 @@ def main():
     api_key = os.environ['API_KEY']
     base_url = os.getenv('BASE_URL', 'https://api.together.xyz/v1')
     model = os.getenv('MODEL', 'meta-llama/Llama-3.3-70B-Instruct-Turbo')
-
 
     client = openai.OpenAI(api_key=api_key, base_url=base_url)
     colorama.init(autoreset=True)
@@ -94,12 +102,11 @@ def main():
         print(Fore.GREEN + f"Concise name received from API for {video_name}: {concise_name}")
 
         new_video_file = rename_video(video_file, concise_name)
-        print(Fore.GREEN + f"Video renamed to: {new_video_file}")
+        print(Fore.GREEN + f"Video and directory renamed to: {new_video_file}")
 
         log_task(log_file, f"Processed {video_name} and renamed to {concise_name}")
 
     print(Fore.MAGENTA + "All tasks completed. Check 1video-titler.txt for the log.")
-
 if __name__ == "__main__":
     main()
 
