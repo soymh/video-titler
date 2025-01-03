@@ -5,6 +5,7 @@ import sys
 import colorama
 from colorama import Fore, Style
 from dotenv import load_dotenv
+import openai
 
 # Function to get all video files in a given directory
 def get_video_files(directory):
@@ -31,7 +32,9 @@ def send_to_api(text, client, model="gpt-4o-mini"):
         model=model,
         messages=[
             {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": f"Pick a concise name for the following text, BECAREFUL where this name is for a file name;DO NOT SAY BACK ANYTHING BUT THE NAME: {text}"},
+            {"role": "user", "content": f"""Pick a concise name in english for the following transcription of a video.
+            The transcription may have various typos in it and yet you are expected to pick a cocise name for the video.
+            BECAREFUL where this name is for a file name and has to be in english. DO NOT SAY BACK ANYTHING BUT THE NAME: {text}"""},
         ],
         max_tokens=50  # Adjust the max_tokens as needed
     )
