@@ -1,0 +1,84 @@
+
+#!/bin/bash
+
+# Function to display help
+function show_help {
+    echo "Usage: $0 --vid <video_file> [additional whisperx arguments]"
+    echo "Extracts audio from the specified video file and processes it with whisperx."
+    echo
+    echo "Options:"
+    echo "  --vid <video_file>   Path to the video file from which to extract audio."
+    echo "  --help               Display this help message."
+}
+
+# Check if no arguments are provided
+if [ "$#" -eq 0 ]; then
+    show_help
+    exit 1
+fi
+
+# Initialize variables
+VIDEO_FILE=""
+ADDITIONAL_ARGS=""
+
+# Parse arguments
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
+        --vid) 
+            VIDEO_FILE="$2"
+            shift 2
+            ;;
+        --help) 
+            show_help
+            exit 0
+            ;;
+        *) 
+            ADDITIONAL_ARGS="$ADDITIONAL_ARGS $1"
+            shift
+            ;;
+    esac
+done
+
+# Check if the video file is provided
+if [ -z "$VIDEO_FILE" ]; then
+    echo "Error: --vid argument is required."
+    show_help
+    exit 1
+fi
+
+# Create a temporary directory
+TMP_DIR=$(mktemp -d)
+WAV_FILE="$TMP_DIR/output_file.wav"
+
+# Extract audio using ffmpeg
+ffmpeg -i "$VIDEO_FILE" -vn -acodec pcm_s16le -ar 44100 -ac 2 "$WAV_FILE" -y
+
+# Check if ffmpeg succeeded
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to extract audio from $VIDEO_FILE."
+    exit 1
+fi
+
+# Get the base name of the video file without the suffix
+BASE_NAME=$(basename "$VIDEO_FILE" | sed 's/\.[^.]*$//')
+VIDEO_DIR=$(dirname "$VIDEO_FILE")
+OUTPUT_DIR="$VIDEO_DIR/$BASE_NAME"
+
+# Create the output directory if it doesn't exist
+mkdir -p "$OUTPUT_DIR"
+
+# Activate the conda environment "whisperX" and run whisperx
+source "$(conda info --base)/etc/profile.d/conda.sh"
+conda activate "whisperx"
+
+# Run whisperx with the extracted audio and additional arguments
+whisperx "$WAV_FILE" --compute_type int8 --model medium --output_dir="$OUTPUT_DIR" $ADDITIONAL_ARGS
+
+# Check if whisperx succeeded
+if [ $? -ne 0 ]; then
+    echo "Error: whisperx failed."
+    exit 1
+fi
+
+# Clean up temporary files
+rm -rf "$TMP_DIR"
